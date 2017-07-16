@@ -86,6 +86,11 @@ TSDF::TSDF(const float high_resolution, const float low_resolution,
 
 
 TSDFs::TSDFs()
+    : time_map_copy_(0.f),
+      time_get_variables_(0.f),
+      time_clear_changes_(0.f),
+      time_integration_(0.f)
+
 {
   // We always want to have at least one tsdf which we can return,
   // and will create it at the origin in absence of a better choice.
@@ -136,6 +141,8 @@ void TSDFs::InsertRangeData(const sensor::RangeData& range_data_in_tracking,
     CHECK_LT(num_range_data_, std::numeric_limits<int>::max());
     ++num_range_data_;
 
+    std::clock_t startcputime_cpy = std::clock();
+
     chisel::PointCloud cloudOut;
     cloudOut.GetMutablePoints().resize(range_data_in_tracking.returns.size());
 
@@ -155,16 +162,28 @@ void TSDFs::InsertRangeData(const sensor::RangeData& range_data_in_tracking,
     chisel_pose.y() = sensor_origin.y();
     chisel_pose.z() = sensor_origin.z();
 
+    double cpu_duration_cpy = (std::clock() - startcputime_cpy) / (double)CLOCKS_PER_SEC;
+    time_map_copy_ += cpu_duration_cpy;
+
     for(int insertion_index : insertion_indices())
     {
+
+        std::clock_t startcputime_clear = std::clock();
         chisel::ChiselPtr<chisel::DistVoxel> chisel_tsdf = submaps_[insertion_index]->tsdf;
         //TSDF* submap = submaps_[insertion_index].get();
         const chisel::ProjectionIntegrator& projection_integrator =
                 projection_integrators_[insertion_index];
+
         chisel_tsdf->GetMutableChunkManager().clearIncrementalChanges();
+        double cpu_duration_clear = (std::clock() - startcputime_clear) / (double)CLOCKS_PER_SEC;
+        time_clear_changes_ += cpu_duration_clear;
+
+        std::clock_t startcputime_integrate = std::clock();
         //min and max dist are already filtered in the local trajectory builder
         chisel_tsdf->IntegratePointCloud(projection_integrator, cloudOut,
-                                         chisel_pose, 0.0f, HUGE_VALF);
+                                         chisel_pose, 0.0f, HUGE_VALF);        
+        double cpu_duration_integrate = (std::clock() - startcputime_integrate) / (double)CLOCKS_PER_SEC;
+        time_integration_ += cpu_duration_integrate;
         //chisel_tsdf->UpdateMeshes();
     }
 
@@ -173,6 +192,12 @@ void TSDFs::InsertRangeData(const sensor::RangeData& range_data_in_tracking,
       AddTSDF(transform::Rigid3d(range_data_in_tracking.origin.cast<double>(),
                                  gravity_alignment)); //todo(kdaun) check transforms
     }
+
+    LOG(INFO)<<"TSDF Evaluation"
+      <<"\n t(copy):\t"<<time_map_copy_
+      <<"\n t(clear):\t"<<time_clear_changes_
+      <<"\n t(integrate):\t"<<time_integration_;
+
 }
 
 void TSDFs::InsertRangeData(std::vector<CombinedRangeData>& combined_range_data,

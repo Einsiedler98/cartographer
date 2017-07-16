@@ -36,6 +36,13 @@ KalmanTSDFLocalTrajectoryBuilder::KalmanTSDFLocalTrajectoryBuilder(
       ceres_scan_matcher_(common::make_unique<scan_matching::CeresTSDFScanMatcher>(
           options_.ceres_scan_matcher_options())),
       num_accumulated_(0),
+      num_optimizations_(0),
+      num_optimization_iterations_(0),
+      num_map_updates_(0),
+      summed_duration_optimization(0.),
+      summed_duration_map_update(0.),
+      summed_residuals(0.0),
+      summed_solver_iterations(0),
       first_pose_prediction_(transform::Rigid3f::Identity()),
       accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}} {}
 
@@ -189,6 +196,8 @@ KalmanTSDFLocalTrajectoryBuilder::AddAccumulatedRangeData(
      submaps()->Get(submaps()->matching_index())->max_truncation_distance,
      1, &pose_observation, &summary);*/
 
+
+  std::clock_t startcputime_opt = std::clock();
   ceres_scan_matcher_->MatchCombined(scan_matcher_pose_estimate_,
                                      initial_ceres_pose,
      {{&filtered_point_cloud_in_tracking,
@@ -197,6 +206,14 @@ KalmanTSDFLocalTrajectoryBuilder::AddAccumulatedRangeData(
              submaps()->Get(submaps()->matching_index())->tsdf}},
      submaps()->Get(submaps()->matching_index())->max_truncation_distance,
      &pose_observation, &summary);
+  double cpu_duration_opt = (std::clock() - startcputime_opt) / (double)CLOCKS_PER_SEC;
+  summed_duration_optimization += cpu_duration_opt;
+  num_optimizations_++;
+  num_optimization_iterations_ += summary.iterations.size();
+  summed_residuals += summary.final_cost;
+
+  if(summary.termination_type != ceres::TerminationType::CONVERGENCE)
+    LOG(WARNING)<<summary.FullReport();
 
 
   pose_tracker_->AddPoseObservation(
@@ -222,8 +239,25 @@ KalmanTSDFLocalTrajectoryBuilder::AddAccumulatedRangeData(
       sensor::VoxelFiltered(range_data_in_tracking.misses,
                             options_.voxel_filter_size() * 0.25)};*/
 
-  return InsertIntoSubmap(time, filtered_range_data, pose_observation,
+
+    std::clock_t startcputime_map = std::clock();
+    std::unique_ptr<KalmanTSDFLocalTrajectoryBuilder::InsertionResult> insertion_result = InsertIntoSubmap(time, filtered_range_data, pose_observation,
                           covariance_estimate, sensor_origin);
+    double cpu_duration_map = (std::clock() - startcputime_map) / (double)CLOCKS_PER_SEC;
+    summed_duration_map_update += cpu_duration_map;
+    num_map_updates_++;
+
+    LOG(INFO)<<"Evaluation report \n t(map) total:\t"<<summed_duration_map_update
+    <<"\n t(opt) total:\t"<<summed_duration_optimization
+    <<"\n t(map) avg:\t"<<summed_duration_map_update/float(num_map_updates_)
+    <<"\n t(opt) avg:\t"<<summed_duration_optimization/float(num_optimizations_)
+    <<"\n iterations avg:\t"<<num_optimization_iterations_/float(num_optimizations_)
+    <<"\n residual avg:\t"<<summed_residuals/float(num_optimizations_)
+    <<"\n n(optimizations):\t"<<num_optimizations_
+    <<"\n n(map_updates):\t"<<num_map_updates_;
+
+    return insertion_result;
+
 }
 
 void KalmanTSDFLocalTrajectoryBuilder::AddOdometerData(

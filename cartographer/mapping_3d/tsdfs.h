@@ -133,6 +133,11 @@ class TSDFs : public mapping::Submaps {
   std::vector<std::unique_ptr<TSDF>> submaps_;
   std::vector<chisel::ProjectionIntegrator> projection_integrators_;
 
+  float time_map_copy_;
+  float time_get_variables_;
+  float time_clear_changes_;
+  float time_integration_;
+
   // Number of RangeData inserted.
   int num_range_data_ = 0;
 

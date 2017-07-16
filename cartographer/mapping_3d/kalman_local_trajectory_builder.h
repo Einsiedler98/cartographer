@@ -79,8 +79,14 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
   std::unique_ptr<scan_matching::CeresScanMatcher> ceres_scan_matcher_;
 
   std::unique_ptr<kalman_filter::PoseTracker> pose_tracker_;
-
   int num_accumulated_;
+  int num_optimizations_;
+  int num_optimization_iterations_;
+  int num_map_updates_;
+  float summed_duration_optimization;
+  float summed_duration_map_update;
+  double summed_residuals;
+  int summed_solver_iterations;
   transform::Rigid3f first_pose_prediction_;
   sensor::RangeData accumulated_range_data_;
 };
