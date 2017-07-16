@@ -218,12 +218,12 @@ void TSDFs::InsertRangeData(std::vector<CombinedRangeData>& combined_range_data,
                                              chisel_pose, 0.0f, HUGE_VALF);
         }
     }
-
+/*
     for(int insertion_index : insertion_indices())
     {
-        //submaps_[insertion_index]->tsdf->UpdateMeshes();
+        submaps_[insertion_index]->tsdf->UpdateMeshes();
     }
-
+*/
 
     ++num_range_data_in_last_submap_;
     if (num_range_data_in_last_submap_ == options_.num_range_data()) {

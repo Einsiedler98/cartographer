@@ -162,8 +162,11 @@ void CeresTSDFScanMatcher::MatchCombined(const transform::Rigid3d& previous_pose
   //CHECK_EQ(options_.occupied_space_weight_size(),
   //         point_clouds_and_tsdfs.size()); todo reenable
 
+  CHECK_EQ(point_clouds_and_tsdfs.size(), 2); //current implementation expects 2 clouds todo(kdaun) generalize
+
  // LOG(INFO) << "point_clouds_and_hybrid_grids.size() '" << point_clouds_and_tsdfs.size();
-  for (size_t i = 0; i != point_clouds_and_tsdfs.size(); ++i) {
+  int i = 0; //for (size_t i = 0; i != point_clouds_and_tsdfs.size(); ++i)
+  {
     CHECK_GT(options_.occupied_space_weight(i), 0.);
     const sensor::PointCloud& point_cloud =
         *point_clouds_and_tsdfs[i].first;
@@ -177,14 +180,17 @@ void CeresTSDFScanMatcher::MatchCombined(const transform::Rigid3d& previous_pose
                 point_cloud, tsdf, 1, max_truncation_distance),
             point_cloud.size()),
         nullptr, ceres_pose.translation(), ceres_pose.rotation());
+
+    const sensor::PointCloud& point_cloud_low_res =
+        *point_clouds_and_tsdfs[i+1].first;
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<TSDFOccupiedSpaceCostFunctor,
                                         ceres::DYNAMIC, 3, 4>(
             new TSDFOccupiedSpaceCostFunctor(
                 options_.occupied_space_weight(i+1) /
-                    std::sqrt(static_cast<double>(point_cloud.size())),
-                point_cloud, tsdf, 4, max_truncation_distance),
-            point_cloud.size()),
+                    std::sqrt(static_cast<double>(point_cloud_low_res.size())),
+                point_cloud_low_res, tsdf, 4, max_truncation_distance),
+            point_cloud_low_res.size()),
         nullptr, ceres_pose.translation(), ceres_pose.rotation());
   }
   CHECK_GT(options_.translation_weight(), 0.);
