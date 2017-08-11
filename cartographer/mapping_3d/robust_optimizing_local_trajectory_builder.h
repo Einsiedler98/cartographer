@@ -127,6 +127,9 @@ class RobustOptimizingLocalTrajectoryBuilder
   std::deque<OdometerData> odometer_data_;
   std::unique_ptr<mapping::ImuTracker> imu_tracker_;
 
+  std::vector<State> states_before_optimization;
+  std::vector<float> accumulated_optimization_corrections;
+
   PoseEstimate last_pose_estimate_;
 
   MotionFilter motion_filter_;

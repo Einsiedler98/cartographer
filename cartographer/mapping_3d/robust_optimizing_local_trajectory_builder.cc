@@ -111,6 +111,11 @@ RobustOptimizingLocalTrajectoryBuilder::RobustOptimizingLocalTrajectoryBuilder(
       num_accumulated_(0),
       num_update_scans_(0),
       motion_filter_(options.motion_filter_options()) {
+
+    while(accumulated_optimization_corrections.size()  < options_.scans_per_accumulation())
+    {
+      accumulated_optimization_corrections.push_back(0.f);
+    }
     LOG(INFO)<<"Initialized RobustOptimizingLocalTrajectoryBuilder";
 }
 
@@ -254,6 +259,15 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   // expected by the OccupiedSpaceCostFunctor. This is reverted after solving
   // the optimization problem.
   TransformStates(matching_submap->local_pose.inverse());
+
+  if(batches_.size() == options_.scans_per_accumulation())
+  {
+    states_before_optimization.clear();
+    for (size_t i = 0; i < batches_.size(); ++i) {
+      states_before_optimization.push_back(batches_[i].state);
+    }
+  }
+
   for (size_t i = 0; i < batches_.size(); ++i) {
     Batch& batch = batches_[i];
     problem.AddResidualBlock(
@@ -365,6 +379,22 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
 
   if(summary.termination_type != ceres::TerminationType::CONVERGENCE)
     LOG(WARNING)<<summary.FullReport();
+
+  std::string corrections;
+
+  if(batches_.size() == options_.scans_per_accumulation())
+  {
+    //states_before_optimization.clear();
+    for (size_t i = 0; i < batches_.size(); ++i) {
+      float res = std::pow((states_before_optimization[i].translation[0]-batches_[i].state.translation[0]), 2.0)
+          + std::pow((states_before_optimization[i].translation[1]-batches_[i].state.translation[1]), 2.0)
+          + std::pow((states_before_optimization[i].translation[2]-batches_[i].state.translation[2]), 2.0);
+      accumulated_optimization_corrections[i] = accumulated_optimization_corrections[i] + res;
+      corrections += " \t ";
+      corrections += std::to_string(accumulated_optimization_corrections[i]);
+    }
+  }
+  LOG(INFO)<<"Corrections"<<corrections;
 
   TransformStates(matching_submap->local_pose);
 
