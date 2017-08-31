@@ -405,19 +405,18 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   sensor::RangeData accumulated_range_data_in_tracking = {
       Eigen::Vector3f::Zero(), {}, {}};
 
-  int i_batch = 0;
   //LOG(INFO)<<"imu_delay: "<<std::to_string(batches_.front().delay_imu);
-  for (const auto& batch : batches_) {
+  for (int i_batch = batches_.size() - 1; i_batch >= 0; --i_batch) {
+    auto& batch = batches_[i_batch];
     const transform::Rigid3f transform =
         (optimized_pose.inverse() * batch.state.ToRigid()).cast<float>();
     for (const Eigen::Vector3f& point : batch.points) {
       accumulated_range_data_in_tracking.returns.push_back(transform * point);
     }
-    i_batch++;
-    if(i_batch == scans_per_map_update)
+    if((int(batches_.size()) - i_batch) == scans_per_map_update)
         break;
   }
-  return AddAccumulatedRangeData(batches_[scans_per_map_update - 1].time + common::FromSeconds(batches_[scans_per_map_update - 1].delay_imu), optimized_pose,
+  return AddAccumulatedRangeData(batches_.back().time + common::FromSeconds(batches_.back().delay_imu), optimized_pose,
                                  accumulated_range_data_in_tracking);
 }
 
