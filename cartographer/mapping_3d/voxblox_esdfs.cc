@@ -82,10 +82,10 @@ VoxbloxESDF::VoxbloxESDF(const float high_resolution, const float low_resolution
     tsdf_origin.z() = origin.translation().z();
 
 
-    voxblox::TsdfMap::Config config;
+    LocalizedTsdfMap::Config config;
     config.tsdf_voxel_size = static_cast<voxblox::FloatingPoint>(high_resolution);
     //config.tsdf_voxels_per_side = voxels_per_side; //todo(kdaun) set form config
-    tsdf.reset(new voxblox::TsdfMap(config));
+    tsdf.reset(new LocalizedTsdfMap(config));
 
     voxblox::EsdfMap::Config esdf_config;
     esdf_config.esdf_voxel_size = static_cast<voxblox::FloatingPoint>(high_resolution);
@@ -115,7 +115,7 @@ const VoxbloxESDF* VoxbloxESDFs::Get(int index) const {
   return submaps_[index].get();
 }
 
-const std::shared_ptr<voxblox::TsdfMap> VoxbloxESDFs::GetVoxbloxTSDFPtr(int index) const {
+const std::shared_ptr<LocalizedTsdfMap> VoxbloxESDFs::GetVoxbloxTSDFPtr(int index) const {
     CHECK_GE(index, 0);
     CHECK_LT(index, size());
     return submaps_[index]->tsdf;
@@ -199,7 +199,7 @@ void VoxbloxESDFs::InsertRangeData(const sensor::RangeData& range_data_in_tracki
 
 
 std::vector<Eigen::Array4i> VoxbloxESDFs::ExtractVoxelData(
-    const std::shared_ptr<voxblox::TsdfMap> hybrid_grid, const transform::Rigid3f& transform,
+    const std::shared_ptr<LocalizedTsdfMap> hybrid_grid, const transform::Rigid3f& transform,
     Eigen::Array2i* min_index, Eigen::Array2i* max_index) const {
   std::vector<Eigen::Array4i> voxel_indices_and_probabilities;
   LOG(WARNING)<<"ExtractVoxelData is not implemented";

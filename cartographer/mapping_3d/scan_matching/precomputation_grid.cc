@@ -93,7 +93,7 @@ PrecomputationGrid ConvertToPrecomputationGrid(const chisel::ChiselPtr<chisel::D
 }
 
 
-PrecomputationGrid ConvertToPrecomputationGrid(const std::shared_ptr<voxblox::TsdfMap> hybrid_grid) {
+PrecomputationGrid ConvertToPrecomputationGrid(const std::shared_ptr<LocalizedTsdfMap> hybrid_grid) {
   PrecomputationGrid result(hybrid_grid->getTsdfLayer().voxel_size());
   Eigen::Array3f origin = {0,0,0}; //todo(kdaun) set origin
   LOG(WARNING)<<"reading default origin";

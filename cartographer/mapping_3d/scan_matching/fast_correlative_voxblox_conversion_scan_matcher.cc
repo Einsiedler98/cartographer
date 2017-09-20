@@ -57,7 +57,7 @@ CreateFastCorrelativeVoxbloxConversionScanMatcherOptions(
 class PrecomputationGridStack {
  public:
   PrecomputationGridStack(
-      const std::shared_ptr<voxblox::TsdfMap>& hybrid_grid,
+      const std::shared_ptr<LocalizedTsdfMap>& hybrid_grid,
       const proto::FastCorrelativeScanMatcherOptions& options) {
     CHECK_GE(options.branch_and_bound_depth(), 1);
     CHECK_GE(options.full_resolution_depth(), 1);
@@ -89,7 +89,7 @@ class PrecomputationGridStack {
   std::vector<PrecomputationGrid> precomputation_grids_;
 };
 
-int ComputeVoxelWidth(const std::shared_ptr<voxblox::TsdfMap> hybrid_grid){
+int ComputeVoxelWidth(const std::shared_ptr<LocalizedTsdfMap> hybrid_grid){
 
     Eigen::Vector3f bounding_box_min{HUGE_VALF, HUGE_VALF, HUGE_VALF};
     Eigen::Vector3f bounding_box_max{-HUGE_VALF, -HUGE_VALF, -HUGE_VALF};
@@ -121,7 +121,7 @@ int ComputeVoxelWidth(const std::shared_ptr<voxblox::TsdfMap> hybrid_grid){
     return int(width_in_voxels_);
 }
 
-FastCorrelativeVoxbloxConversionScanMatcher::FastCorrelativeVoxbloxConversionScanMatcher(const std::shared_ptr<voxblox::TsdfMap> hybrid_grid,
+FastCorrelativeVoxbloxConversionScanMatcher::FastCorrelativeVoxbloxConversionScanMatcher(const std::shared_ptr<LocalizedTsdfMap> hybrid_grid,
     const std::vector<mapping::TrajectoryNode>& nodes,
     const proto::FastCorrelativeScanMatcherOptions& options)
     : options_(options),

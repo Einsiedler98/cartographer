@@ -28,6 +28,7 @@
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/probability_grid.h"
+#include "cartographer/mapping_3d/voxblox_localized_tsdf_map.h"
 #include "glog/logging.h"
 #include <open_chisel/Chisel.h>
 #include <open_chisel/DistVoxel.h>
@@ -109,7 +110,7 @@ class Submaps {
   // return the same pointer, so that Submaps can be identified by it.
   virtual const Submap* Get(int index) const = 0;
   virtual const chisel::ChiselPtr<chisel::DistVoxel> GetChiselPtr(int index) const = 0;
-  virtual const std::shared_ptr<voxblox::TsdfMap> GetVoxbloxTSDFPtr(int index) const = 0;
+  virtual const std::shared_ptr<mapping_3d::LocalizedTsdfMap> GetVoxbloxTSDFPtr(int index) const = 0;
   virtual const std::shared_ptr<voxblox::EsdfMap> GetVoxbloxESDFPtr(int index) const = 0;
 
   // Returns the number of Submaps.

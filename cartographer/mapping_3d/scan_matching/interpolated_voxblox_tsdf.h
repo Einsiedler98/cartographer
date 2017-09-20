@@ -38,7 +38,7 @@ namespace scan_matching {
 
 class InterpolatedVoxbloxTSDF {
 public:
-  explicit InterpolatedVoxbloxTSDF(const std::shared_ptr<voxblox::TsdfMap>  tsdf,
+  explicit InterpolatedVoxbloxTSDF(const std::shared_ptr<LocalizedTsdfMap>  tsdf,
                                    float max_truncation_distance)
     : tsdf_(tsdf), max_truncation_distance_(max_truncation_distance) {}
 
@@ -186,7 +186,7 @@ public:
         q1;
   }
 
-  const std::shared_ptr<voxblox::TsdfMap> getTSDF() const {
+  const std::shared_ptr<LocalizedTsdfMap> getTSDF() const {
     return tsdf_;
   }
 
@@ -257,7 +257,7 @@ private:
     return valid;
   }
 
-  const std::shared_ptr<voxblox::TsdfMap> tsdf_;
+  const std::shared_ptr<LocalizedTsdfMap> tsdf_;
   float max_truncation_distance_;
 };
 

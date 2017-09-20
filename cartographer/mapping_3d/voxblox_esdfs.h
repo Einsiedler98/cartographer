@@ -54,7 +54,7 @@ struct VoxbloxESDF : public mapping::Submap {
          const transform::Rigid3d& origin, int begin_range_data_index,
          float max_truncation_distance, Eigen::Vector3i& chunk_size);
 
-  std::shared_ptr<voxblox::TsdfMap> tsdf;
+  std::shared_ptr<LocalizedTsdfMap> tsdf;
   std::shared_ptr<voxblox::EsdfMap> esdf;
   bool finished = false;
   float max_truncation_distance;
@@ -74,7 +74,7 @@ class VoxbloxESDFs : public mapping::Submaps {
   const VoxbloxESDF* Get(int index) const override;
   const chisel::ChiselPtr<chisel::DistVoxel> GetChiselPtr(int index) const override{
       LOG(FATAL) << "Not implemented."; }
-  const std::shared_ptr<voxblox::TsdfMap> GetVoxbloxTSDFPtr(int index) const override;
+  const std::shared_ptr<LocalizedTsdfMap> GetVoxbloxTSDFPtr(int index) const override;
   const std::shared_ptr<voxblox::EsdfMap> GetVoxbloxESDFPtr(int index) const override;
   const std::shared_ptr<voxblox::TsdfIntegratorBase> GetIntegrator(int index) const;
   int size() const override;
@@ -119,7 +119,7 @@ class VoxbloxESDFs : public mapping::Submaps {
   // last is the corresponding probability value. We batch them together like
   // this to only have one vector and have better cache locality.
   std::vector<Eigen::Array4i> ExtractVoxelData(
-      const std::shared_ptr<voxblox::TsdfMap> hybrid_grid, const transform::Rigid3f& transform,
+      const std::shared_ptr<LocalizedTsdfMap> hybrid_grid, const transform::Rigid3f& transform,
       Eigen::Array2i* min_index, Eigen::Array2i* max_index) const;
   // Builds texture data containing interleaved value and alpha for the
   // visualization from 'accumulated_pixel_data'.

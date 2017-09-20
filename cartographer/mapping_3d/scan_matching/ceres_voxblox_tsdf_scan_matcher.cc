@@ -112,7 +112,7 @@ void CeresVoxbloxTSDFScanMatcher::Match(const transform::Rigid3d& previous_pose,
     CHECK_GT(options_.occupied_space_weight(i), 0.);
     const sensor::PointCloud& point_cloud =
         *point_clouds_and_tsdfs[i].first;
-    const std::shared_ptr<voxblox::TsdfMap> tsdf = point_clouds_and_tsdfs[i].second;
+    const std::shared_ptr<LocalizedTsdfMap> tsdf = point_clouds_and_tsdfs[i].second;
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<VoxbloxTSDFOccupiedSpaceCostFunctor,
           ceres::DYNAMIC, 3, 4>(
@@ -171,7 +171,7 @@ void CeresVoxbloxTSDFScanMatcher::MatchCombined(const transform::Rigid3d& previo
     CHECK_GT(options_.occupied_space_weight(i), 0.);
     const sensor::PointCloud& point_cloud =
         *point_clouds_and_tsdfs[i].first;
-    const std::shared_ptr<voxblox::TsdfMap> tsdf = point_clouds_and_tsdfs[i].second;
+    const std::shared_ptr<LocalizedTsdfMap> tsdf = point_clouds_and_tsdfs[i].second;
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<VoxbloxTSDFOccupiedSpaceCostFunctor,
                                         ceres::DYNAMIC, 3, 4>(

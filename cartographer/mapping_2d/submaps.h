@@ -29,6 +29,7 @@
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/proto/submaps_options.pb.h"
 #include "cartographer/mapping_2d/range_data_inserter.h"
+#include "cartographer/mapping_3d/voxblox_localized_tsdf_map.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -58,7 +59,7 @@ class Submaps : public mapping::Submaps {
   const Submap* Get(int index) const override;
   const chisel::ChiselPtr<chisel::DistVoxel> GetChiselPtr(int index) const override{
       LOG(FATAL) << "Not implemented."; }
-  const std::shared_ptr<voxblox::TsdfMap> GetVoxbloxTSDFPtr(int index) const override{
+  const std::shared_ptr<mapping_3d::LocalizedTsdfMap> GetVoxbloxTSDFPtr(int index) const override{
       LOG(FATAL) << "Not implemented."; }
   const std::shared_ptr<voxblox::EsdfMap> GetVoxbloxESDFPtr(int index) const override{
       LOG(FATAL) << "Not implemented."; }

@@ -31,6 +31,7 @@
 #include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/rotational_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/candidate.h"
+#include "cartographer/mapping_3d/voxblox_localized_tsdf_map.h"
 #include "cartographer/sensor/point_cloud.h"
 #include <voxblox/core/common.h>
 #include <voxblox/core/tsdf_map.h>
@@ -48,7 +49,7 @@ class PrecomputationGridStack;
 class FastCorrelativeVoxbloxConversionScanMatcher {
  public:
   FastCorrelativeVoxbloxConversionScanMatcher(
-      const std::shared_ptr<voxblox::TsdfMap> hybrid_grid,
+      const std::shared_ptr<LocalizedTsdfMap> hybrid_grid,
       const std::vector<mapping::TrajectoryNode>& nodes,
       const proto::FastCorrelativeScanMatcherOptions& options);
   ~FastCorrelativeVoxbloxConversionScanMatcher();

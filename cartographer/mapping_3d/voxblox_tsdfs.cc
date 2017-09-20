@@ -23,6 +23,7 @@
 #include "cartographer/common/math.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/mapping_3d/proto/tsdfs_options.pb.h"
+#include "cartographer/mapping_3d/voxblox_localized_tsdf_map.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -82,10 +83,10 @@ VoxbloxTSDF::VoxbloxTSDF(const float high_resolution, const float low_resolution
     tsdf_origin.z() = origin.translation().z();
 
 
-    voxblox::TsdfMap::Config config;
+    LocalizedTsdfMap::Config config;
     config.tsdf_voxel_size = static_cast<voxblox::FloatingPoint>(high_resolution);
     //config.tsdf_voxels_per_side = voxels_per_side;
-    tsdf.reset(new voxblox::TsdfMap(config));
+    tsdf.reset(new LocalizedTsdfMap(config));
 }
 
 
@@ -110,7 +111,7 @@ const VoxbloxTSDF* VoxbloxTSDFs::Get(int index) const {
   return submaps_[index].get();
 }
 
-const std::shared_ptr<voxblox::TsdfMap> VoxbloxTSDFs::GetVoxbloxTSDFPtr(int index) const {
+const std::shared_ptr<LocalizedTsdfMap> VoxbloxTSDFs::GetVoxbloxTSDFPtr(int index) const {
     CHECK_GE(index, 0);
     CHECK_LT(index, size());
     return submaps_[index]->tsdf;
@@ -163,7 +164,7 @@ void VoxbloxTSDFs::InsertRangeData(const sensor::RangeData& range_data_in_tracki
     //LOG(INFO)<<"T_G_C: "<<T_G_C;
     for(int insertion_index : insertion_indices())
     {
-        //std::shared_ptr<voxblox::TsdfMap> voxblox_tsdf = submaps_[insertion_index]->tsdf;
+        //std::shared_ptr<LocalizedTsdfMap> voxblox_tsdf = submaps_[insertion_index]->tsdf;
         std::shared_ptr<voxblox::TsdfIntegratorBase> tsdf_integrator_ =
                 projection_integrators_[insertion_index];
 
@@ -186,7 +187,7 @@ void VoxbloxTSDFs::InsertRangeData(const sensor::RangeData& range_data_in_tracki
 
 
 std::vector<Eigen::Array4i> VoxbloxTSDFs::ExtractVoxelData(
-    const std::shared_ptr<voxblox::TsdfMap> hybrid_grid, const transform::Rigid3f& transform,
+    const std::shared_ptr<LocalizedTsdfMap> hybrid_grid, const transform::Rigid3f& transform,
     Eigen::Array2i* min_index, Eigen::Array2i* max_index) const {
   std::vector<Eigen::Array4i> voxel_indices_and_probabilities;
   const float resolution = hybrid_grid->getTsdfLayer().voxel_size();
@@ -288,7 +289,7 @@ void VoxbloxTSDFs::SubmapToProto(
     LOG(WARNING)<<"SubmapToProto is not implemented";
     // Generate an X-ray view through the 'hybrid_grid', aligned to the xy-plane
     // in the global map frame.
-    const std::shared_ptr<voxblox::TsdfMap> hybrid_grid = Get(index)->tsdf;
+    const std::shared_ptr<LocalizedTsdfMap> hybrid_grid = Get(index)->tsdf;
     response->set_resolution(hybrid_grid->getTsdfLayer().voxel_size());
 
     // Compute a bounding box for the texture.

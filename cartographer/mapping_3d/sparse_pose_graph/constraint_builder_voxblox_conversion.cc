@@ -126,7 +126,7 @@ void ConstraintBuilderVoxbloxConversion::WhenDone(
 void ConstraintBuilderVoxbloxConversion::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
     const mapping::SubmapId& submap_id,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    std::shared_ptr<voxblox::TsdfMap> submap, const std::function<void()> work_item) {
+    std::shared_ptr<LocalizedTsdfMap> submap, const std::function<void()> work_item) {
 if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
     nullptr) {
   thread_pool_->Schedule(work_item);
@@ -143,7 +143,7 @@ if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
 void ConstraintBuilderVoxbloxConversion::ConstructSubmapScanMatcher(
     const mapping::SubmapId& submap_id,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    std::shared_ptr<voxblox::TsdfMap> submap) {
+    std::shared_ptr<LocalizedTsdfMap> submap) {
     /*auto submap_scan_matcher =
         common::make_unique<scan_matching::FastCorrelativeConversionScanMatcher>(
             submap, submap_nodes,

@@ -29,6 +29,7 @@
 #include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
+#include "cartographer/mapping_3d/voxblox_localized_tsdf_map.h"
 
 namespace cartographer {
 namespace mapping_3d {
@@ -38,7 +39,7 @@ proto::CeresScanMatcherOptions CreateCeresVoxbloxTSDFScanMatcherOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
 using PointCloudAndVoxbloxTSDFPointers =
-    std::pair<const sensor::PointCloud*, const std::shared_ptr<voxblox::TsdfMap>>;
+    std::pair<const sensor::PointCloud*, const std::shared_ptr<LocalizedTsdfMap>>;
 
 // This scan matcher uses Ceres to align scans with an existing map.
 class CeresVoxbloxTSDFScanMatcher {

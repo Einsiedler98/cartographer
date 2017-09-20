@@ -37,7 +37,7 @@ class VoxbloxTSDFOccupiedSpaceCostFunctor {
   // add to all poses, and point cloud.
   VoxbloxTSDFOccupiedSpaceCostFunctor(const double scaling_factor,
                            const sensor::PointCloud& point_cloud,
-                           std::shared_ptr<voxblox::TsdfMap> tsdf,
+                           std::shared_ptr<LocalizedTsdfMap> tsdf,
                            int coarsening_factor, float max_truncation_distance)
       : scaling_factor_(scaling_factor),
         coarsening_factor_(coarsening_factor),
