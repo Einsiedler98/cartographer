@@ -125,33 +125,17 @@ public:
       summed_valid_sdf += q222;
     }
 
+
     if(num_invalid_voxel > 0)
     {
-      double signed_max_tsdf = summed_valid_sdf < 0 ? - max_truncation_distance_ : max_truncation_distance_;
-      if(std::isnan(q111)) {
-        q111 = signed_max_tsdf;
-      }
-      if(std::isnan(q112)) {
-        q112 = signed_max_tsdf;
-      }
-      if(std::isnan(q121)) {
-        q121 = signed_max_tsdf;
-      }
-      if(std::isnan(q122)) {
-        q122 = signed_max_tsdf;
-      }
-      if(std::isnan(q211)) {
-        q211 = signed_max_tsdf;
-      }
-      if(std::isnan(q212)) {
-        q212 = signed_max_tsdf;
-      }
-      if(std::isnan(q221)) {
-        q221 = signed_max_tsdf;
-      }
-      if(std::isnan(q222)) {
-        q222 = signed_max_tsdf;
-      }
+        q111 = max_truncation_distance_;
+        q112 = max_truncation_distance_;
+        q121 = max_truncation_distance_;
+        q122 = max_truncation_distance_;
+        q211 = max_truncation_distance_;
+        q212 = max_truncation_distance_;
+        q221 = max_truncation_distance_;
+        q222 = max_truncation_distance_;
     }
 
     const T normalized_x = (x - x1) / (x2 - x1);

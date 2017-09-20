@@ -95,7 +95,9 @@ PrecomputationGrid ConvertToPrecomputationGrid(const chisel::ChiselPtr<chisel::D
 
 PrecomputationGrid ConvertToPrecomputationGrid(const std::shared_ptr<LocalizedTsdfMap> hybrid_grid) {
   PrecomputationGrid result(hybrid_grid->getTsdfLayer().voxel_size());
-  Eigen::Array3f origin = {0,0,0}; //todo(kdaun) set origin
+  Eigen::Array3f origin{(float)hybrid_grid->getOrigin().translation()[0],
+        (float)hybrid_grid->getOrigin().translation()[1],
+        (float)hybrid_grid->getOrigin().translation()[2]};
   LOG(WARNING)<<"reading default origin";
   float resolution = hybrid_grid->getTsdfLayer().voxel_size();
   float min_sdf = 0.f;

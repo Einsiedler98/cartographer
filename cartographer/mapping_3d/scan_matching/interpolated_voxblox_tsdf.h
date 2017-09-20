@@ -21,6 +21,7 @@
 
 #include <voxblox/core/common.h>
 #include <voxblox/core/tsdf_map.h>
+#include <cartographer/mapping_3d/voxblox_localized_tsdf_map.h>
 
 namespace cartographer {
 namespace mapping_3d {
@@ -59,9 +60,10 @@ public:
     double x1, y1, z1, x2, y2, z2;
     //const auto& chunk_manager = tsdf_->GetChunkManager(); //todo(kdaun) reenable
     //chisel::Vec3 origin = chunk_manager.GetOrigin();
-    T x_local = x;// - T(origin.x());
-    T y_local = y;// - T(origin.y());
-    T z_local = z;// - T(origin.z());
+    const Eigen::Vector3d origin = tsdf_->getOrigin().translation();
+    T x_local = x - T(origin[0]);
+    T y_local = y - T(origin[1]);
+    T z_local = z - T(origin[2]);
 
     ComputeInterpolationDataPoints(x_local, y_local, z_local, &x1, &y1, &z1, &x2, &y2, &z2, coarsening_factor);
 
@@ -125,33 +127,17 @@ public:
       summed_valid_sdf += q222;
     }
 
+
     if(num_invalid_voxel > 0)
     {
-      double signed_max_tsdf = summed_valid_sdf < 0 ? - max_truncation_distance_ : max_truncation_distance_;
-      if(std::isnan(q111)) {
-        q111 = signed_max_tsdf;
-      }
-      if(std::isnan(q112)) {
-        q112 = signed_max_tsdf;
-      }
-      if(std::isnan(q121)) {
-        q121 = signed_max_tsdf;
-      }
-      if(std::isnan(q122)) {
-        q122 = signed_max_tsdf;
-      }
-      if(std::isnan(q211)) {
-        q211 = signed_max_tsdf;
-      }
-      if(std::isnan(q212)) {
-        q212 = signed_max_tsdf;
-      }
-      if(std::isnan(q221)) {
-        q221 = signed_max_tsdf;
-      }
-      if(std::isnan(q222)) {
-        q222 = signed_max_tsdf;
-      }
+        q111 = max_truncation_distance_;
+        q112 = max_truncation_distance_;
+        q121 = max_truncation_distance_;
+        q122 = max_truncation_distance_;
+        q211 = max_truncation_distance_;
+        q212 = max_truncation_distance_;
+        q221 = max_truncation_distance_;
+        q222 = max_truncation_distance_;
     }
 
     const T normalized_x = (x - x1) / (x2 - x1);

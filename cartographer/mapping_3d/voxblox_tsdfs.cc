@@ -86,7 +86,7 @@ VoxbloxTSDF::VoxbloxTSDF(const float high_resolution, const float low_resolution
     LocalizedTsdfMap::Config config;
     config.tsdf_voxel_size = static_cast<voxblox::FloatingPoint>(high_resolution);
     //config.tsdf_voxels_per_side = voxels_per_side;
-    tsdf.reset(new LocalizedTsdfMap(config));
+    tsdf.reset(new LocalizedTsdfMap(config, origin));
 }
 
 
@@ -164,18 +164,21 @@ void VoxbloxTSDFs::InsertRangeData(const sensor::RangeData& range_data_in_tracki
     //LOG(INFO)<<"T_G_C: "<<T_G_C;
     for(int insertion_index : insertion_indices())
     {
-        //std::shared_ptr<LocalizedTsdfMap> voxblox_tsdf = submaps_[insertion_index]->tsdf;
+        transform::Rigid3d origin = submaps_[insertion_index]->tsdf->getOrigin();
+
+        voxblox::Pointcloud points_C_local;
+        points_C_local.reserve(range_data_in_tracking.returns.size());
+        for (const Eigen::Vector3f& pt : range_data_in_tracking.returns)
+        {
+          points_C_local.push_back(voxblox::Point(pt(0) - origin.translation()[0],
+                                   pt(1) - origin.translation()[1],
+                                   pt(2) - origin.translation()[2]));
+        }
+
         std::shared_ptr<voxblox::TsdfIntegratorBase> tsdf_integrator_ =
                 projection_integrators_[insertion_index];
 
-        tsdf_integrator_->integratePointCloud(T_G_C, points_C, colors);
-
-        /*
-        chisel_tsdf->GetMutableChunkManager().clearIncrementalChanges();
-        //min and max dist are already filtered in the local trajectory builder
-        chisel_tsdf->IntegratePointCloud(projection_integrator, cloudOut,
-                                         chisel_pose, 0.0f, HUGE_VALF);
-        chisel_tsdf->UpdateMeshes();*/
+        tsdf_integrator_->integratePointCloud(T_G_C, points_C_local, colors);
     }
 
     ++num_range_data_in_last_submap_;
@@ -286,7 +289,6 @@ std::vector<VoxbloxTSDFs::PixelData> VoxbloxTSDFs::AccumulatePixelData(
 void VoxbloxTSDFs::SubmapToProto(
     int index, const transform::Rigid3d& global_submap_pose,
     mapping::proto::SubmapQuery::Response* const response) const {
-    LOG(WARNING)<<"SubmapToProto is not implemented";
     // Generate an X-ray view through the 'hybrid_grid', aligned to the xy-plane
     // in the global map frame.
     const std::shared_ptr<LocalizedTsdfMap> hybrid_grid = Get(index)->tsdf;

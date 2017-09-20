@@ -31,6 +31,9 @@ public:
       origin_(origin){
     block_size_ = config.tsdf_voxel_size * config.tsdf_voxels_per_side;
   }
+  transform::Rigid3d getOrigin() {
+    return origin_;
+  }
 protected:
   const transform::Rigid3d origin_;
 };
