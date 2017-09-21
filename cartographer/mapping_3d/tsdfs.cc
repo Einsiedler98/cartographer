@@ -375,6 +375,7 @@ void TSDFs::AddTSDF(const transform::Rigid3d& origin) {
   chunk_size.x() = options_.chuck_size_x();
   chunk_size.y() = options_.chuck_size_y();
   chunk_size.z() = options_.chuck_size_z();
+  LOG(INFO)<<"AddTSDF: "<<origin;
   submaps_.emplace_back(new TSDF(options_.high_resolution(), options_.low_resolution(), origin,
                                    num_range_data_,max_truncation_distance, chunk_size));
   chisel::ProjectionIntegrator projection_integrator;
