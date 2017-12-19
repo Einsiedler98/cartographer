@@ -22,8 +22,6 @@
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/probability_values.h"
 #include "glog/logging.h"
-#include <open_chisel/Chisel.h>
-#include <open_chisel/DistVoxel.h>
 
 namespace cartographer {
 namespace mapping_3d {
@@ -49,48 +47,6 @@ Eigen::Array3i CellIndexAtHalfResolution(const Eigen::Array3i& cell_index) {
 
 }  // namespace
 
-PrecomputationGrid ConvertToPrecomputationGrid(const chisel::ChiselPtr<chisel::DistVoxel> hybrid_grid) {
-  PrecomputationGrid result(hybrid_grid->GetChunkManager().GetResolution());
-
-  const chisel::AABB& bounding_box = hybrid_grid->GetChunkManager().GetBoundingBox();
-  const chisel::Vec3& min = bounding_box.min;
-  const chisel::Vec3& max = bounding_box.max;
-  Eigen::Array3f origin = hybrid_grid->GetChunkManager().GetOrigin();
-  float resolution = hybrid_grid->GetChunkManager().GetResolution();
-  float min_sdf = 0.f;
-  float max_sdf = 0.5f;
-
-  for(float x = min.x(); x < max.x(); x = x + resolution)
-  {
-      for(float y = min.y(); y < max.y(); y = y + resolution)
-      {
-          for(float z = min.z(); z < max.z(); z = z + resolution)
-          {
-              const auto& chunk_manager = hybrid_grid->GetChunkManager();
-              const chisel::DistVoxel* voxel = chunk_manager.GetDistanceVoxelGlobal(chisel::Vec3(x,y,z));
-              if(voxel) {
-                if(voxel->IsValid()) {
-                    const float sdf = std::abs(voxel->GetSDF());
-                    const int cell_value = 255 - common::RoundToInt(sdf - min_sdf) *
-                        (255.f / (max_sdf - min_sdf));
-                    Eigen::Array3f point;
-                    point.x() = x;
-                    point.y() = y;
-                    point.z() = z;
-                    Eigen::Array3f index_float = (point - origin).array() / resolution;
-                    Eigen::Array3i index_int(common::RoundToInt(index_float.x()),
-                                          common::RoundToInt(index_float.y()),
-                                          common::RoundToInt(index_float.z()));
-                    *result.mutable_value(index_int) = cell_value;
-                }
-              }
-          }
-      }
-  }
-
-
-  return result;
-}
 
 PrecomputationGrid ConvertToPrecomputationGrid(const HybridGrid& hybrid_grid) {
   PrecomputationGrid result(hybrid_grid.resolution());

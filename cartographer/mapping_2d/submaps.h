@@ -57,8 +57,6 @@ class Submaps : public mapping::Submaps {
 
   const Submap* Get(int index) const override;
 
-  const chisel::ChiselPtr<chisel::DistVoxel> GetChiselPtr(int index) const override{
-      LOG(FATAL) << "Not implemented."; }
   int size() const override;
   void SubmapToProto(
       int index, const transform::Rigid3d& global_submap_pose,

@@ -30,7 +30,6 @@ find_package(Boost REQUIRED COMPONENTS iostreams)
 find_package(Ceres REQUIRED COMPONENTS SparseLinearAlgebraLibrary)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
-find_package(open_chisel REQUIRED)
 find_package(Protobuf REQUIRED)
 
 include(FindPkgConfig)
@@ -135,10 +134,6 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 # TODO(hrapp): This should not explicitly list pthread and use
 # PROTOBUF_LIBRARIES, but that failed on first try.
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} pthread)
-
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  "${open_chisel_INCLUDE_DIRS}")
-target_link_libraries(${PROJECT_NAME} PUBLIC ${open_chisel_LIBRARIES})
 
 # Add the binary directory first, so that port.h is included after it has
 # been generated.

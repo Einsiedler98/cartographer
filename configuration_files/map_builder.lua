@@ -19,5 +19,4 @@ MAP_BUILDER = {
   use_trajectory_builder_3d = false,
   num_background_threads = 4,
   sparse_pose_graph = SPARSE_POSE_GRAPH,
-  use_tsdf = true,
 }

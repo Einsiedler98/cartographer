@@ -27,6 +27,4 @@ message MapBuilderOptions {
   // Number of threads to use for background computations.
   optional int32 num_background_threads = 3;
   optional SparsePoseGraphOptions sparse_pose_graph_options = 4;
-  
-  optional bool use_tsdf = 5;
 }

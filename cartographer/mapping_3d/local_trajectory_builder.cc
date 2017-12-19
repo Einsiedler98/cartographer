@@ -18,7 +18,6 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping_3d/kalman_local_trajectory_builder.h"
-#include "cartographer/mapping_3d/kalman_tsdf_local_trajectory_builder.h"
 #include "cartographer/mapping_3d/optimizing_local_trajectory_builder.h"
 #include "cartographer/mapping_3d/robust_optimizing_local_trajectory_builder.h"
 

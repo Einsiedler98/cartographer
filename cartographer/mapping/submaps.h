@@ -29,9 +29,6 @@
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "glog/logging.h"
-#include <open_chisel/Chisel.h>
-#include <open_chisel/DistVoxel.h>
-
 namespace cartographer {
 namespace mapping {
 
@@ -106,15 +103,6 @@ class Submaps {
   // Returns the Submap with the given 'index'. The same 'index' will always
   // return the same pointer, so that Submaps can be identified by it.
   virtual const Submap* Get(int index) const = 0;
-
-  /*
-  const chisel::ChiselPtr GetChiselPtr(int index) const {
-      LOG(WARNING) << "Calling GetChiselPtr dummy";
-      chisel::ChiselPtr dummy_ptr;
-      return dummy_ptr;
-  }*/
-
-  virtual const chisel::ChiselPtr<chisel::DistVoxel> GetChiselPtr(int index) const = 0;
 
   // Returns the number of Submaps.
   virtual int size() const = 0;

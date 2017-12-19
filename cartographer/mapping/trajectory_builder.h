@@ -30,7 +30,6 @@
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
-#include "cartographer/mapping_3d/tsdfs.h"
 
 namespace cartographer {
 namespace mapping {
