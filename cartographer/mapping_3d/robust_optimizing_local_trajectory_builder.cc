@@ -250,6 +250,8 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     return nullptr;
   }
 
+  std::vector<std::vector<std::pair<size_t, double>>> residual_structure;
+  int control_counter = 0;
   ceres::Problem problem;
   const Submap* const matching_submap =
       submaps_->Get(submaps_->matching_index());
@@ -258,6 +260,7 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   // the optimization problem.
   TransformStates(matching_submap->local_pose.inverse());
   for (size_t i = 0; i < batches_.size(); ++i) {
+    residual_structure.emplace_back(std::vector<std::pair<size_t, double>>{});
     Batch& batch = batches_[i];
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<scan_matching::OccupiedSpaceCostFunctor,
@@ -270,7 +273,10 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                 batch.high_resolution_filtered_points,
                 matching_submap->high_resolution_hybrid_grid),
             batch.high_resolution_filtered_points.size()),
-        nullptr, batch.state.translation.data(), batch.state.rotation.data());
+        nullptr, batch.state.translation.data(), batch.state.rotation.data());    
+    residual_structure[i].emplace_back(std::make_pair(batch.high_resolution_filtered_points.size(),0));
+    control_counter += batch.high_resolution_filtered_points.size();
+
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<scan_matching::OccupiedSpaceCostFunctor,
                                         ceres::DYNAMIC, 3, 4>(
@@ -283,6 +289,8 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                 matching_submap->low_resolution_hybrid_grid),
             batch.low_resolution_filtered_points.size()),
         nullptr, batch.state.translation.data(), batch.state.rotation.data());
+    residual_structure[i].emplace_back(std::make_pair(batch.low_resolution_filtered_points.size(),0));
+    control_counter += batch.low_resolution_filtered_points.size();
 
     if (i == 0) {
       problem.SetParameterBlockConstant(batch.state.translation.data());
@@ -304,6 +312,8 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                     .velocity_weight())),
         nullptr, batches_[i - 1].state.velocity.data(),
         batches_[i].state.velocity.data());
+    residual_structure[i].emplace_back(std::make_pair(3,0));
+    control_counter += 3;
 
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<TranslationCostFunction, 3, 3, 3, 3>(
@@ -314,6 +324,8 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
         nullptr, batches_[i - 1].state.translation.data(),
         batches_[i].state.translation.data(),
         batches_[i - 1].state.velocity.data());
+    residual_structure[i].emplace_back(std::make_pair(3,0));
+    control_counter += 3;
 
     if(options_.optimizing_local_trajectory_builder_options().use_imu_time_calibration()){
       problem.AddResidualBlock(
@@ -341,6 +353,8 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                   result.delta_rotation)),
           nullptr, batches_[i - 1].state.rotation.data(),
           batches_[i].state.rotation.data());
+      residual_structure[i].emplace_back(std::make_pair(3,0));
+      control_counter += 3;
     }
 
 
@@ -378,6 +392,8 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
           batches_[i - 1].state.rotation.data(),
           batches_[i].state.translation.data(),
           batches_[i].state.rotation.data());
+      residual_structure[i].emplace_back(std::make_pair(4,0));
+      control_counter += 4;
     }
   }
 
@@ -385,6 +401,71 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   ceres::Solve(ceres_solver_options_, &problem, &summary);
   // The optimized states in 'batches_' are in the submap frame and we transform
   // them in place to be in the local SLAM frame again.
+
+  bool verbose = true;
+  if(verbose) {
+    double cost;
+    std::vector<double> residuals;
+    std::vector<double> gradient;
+    problem.Evaluate(ceres::Problem::EvaluateOptions(), &cost, &residuals, &gradient, NULL);
+    LOG(INFO)<<"Residual size: "<<residuals.size()<<" "<<control_counter;
+    size_t block_idx;
+    size_t residual_idx = 0;
+    size_t batch_idx = 0;
+    for(batch_idx = 0; batch_idx < batches_.size(); ++ batch_idx) {
+      //Occupied cost high res
+      double avg = 0.0;
+      for(block_idx = 0; block_idx < residual_structure[batch_idx][0].first; ++block_idx) {
+        avg += residuals[residual_idx];
+        residual_idx++;
+      }
+      residual_structure[batch_idx][0].second = avg;// / residual_structure[block_idx].size();
+      //Occupied cost low res
+      avg = 0.0;
+      for(block_idx = 0; block_idx < residual_structure[batch_idx][1].first; ++block_idx) {
+        avg += residuals[residual_idx];
+        residual_idx++;
+      }
+      residual_structure[batch_idx][1].second = avg;// / residual_structure[block_idx].size();
+    }
+    for(batch_idx = 1; batch_idx < batches_.size(); ++ batch_idx) {
+      //Velocity Delta
+      double avg = 0.0;
+      for(block_idx = 0; block_idx < residual_structure[batch_idx][2].first; ++block_idx) {
+        avg += residuals[residual_idx];
+        residual_idx++;
+      }
+      residual_structure[batch_idx][2].second = avg;// / residual_structure[block_idx].size();
+      //Translation
+      avg = 0.0;
+      for(block_idx = 0; block_idx < residual_structure[batch_idx][3].first; ++block_idx) {
+        avg += residuals[residual_idx];
+        residual_idx++;
+      }
+      residual_structure[batch_idx][3].second = avg;// / residual_structure[block_idx].size();
+      //Rotation
+      avg = 0.0;
+      for(block_idx = 0; block_idx < residual_structure[batch_idx][4].first; ++block_idx) {
+        avg += residuals[residual_idx];
+        residual_idx++;
+      }
+      residual_structure[batch_idx][4].second = avg;// / residual_structure[block_idx].size();
+
+    }
+    LOG(INFO)<<"Residuals: ";
+    batch_idx = 0;
+    std::string batch_results = "\n";
+    for (auto i: residual_structure) {
+      batch_results += std::to_string(batch_idx);
+      for (auto j: i) {
+        batch_results += "\t" + std::to_string(j.second);
+      }
+      batch_results += "\n";
+      batch_idx++;
+    }
+    LOG(INFO)<<batch_results;
+  }
+
 
   if(summary.termination_type != ceres::TerminationType::CONVERGENCE)
     LOG(WARNING)<<summary.FullReport();
@@ -404,7 +485,7 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
       Eigen::Vector3f::Zero(), {}, {}};
 
   int i_batch = 0;
-  LOG(INFO)<<"imu_delay: "<<std::to_string(batches_[0].delay_imu);
+  //LOG(INFO)<<"imu_delay: "<<std::to_string(batches_[0].delay_imu);
   for (const auto& batch : batches_) {
     const transform::Rigid3f transform =
         (optimized_pose.inverse() * batch.state.ToRigid()).cast<float>();
