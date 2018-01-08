@@ -193,7 +193,16 @@ RobustOptimizingLocalTrajectoryBuilder::AddRangefinderData(
               low_resolution_filtered_points,
               State(Eigen::Vector3d::Zero(), imu_tracker_->orientation(),
                     Eigen::Vector3d::Zero()), imu_initial_delay});
-  } else {
+  }
+  else if (num_accumulated_ < 3 * options_.scans_per_accumulation()) {
+    const Batch& last_batch = batches_.back();
+    batches_.push_back(
+        Batch{time, point_cloud, high_resolution_filtered_points,
+              low_resolution_filtered_points,
+              State(Eigen::Vector3d::Zero(), imu_tracker_->orientation(),
+              Eigen::Vector3d::Zero()), last_batch.delay_imu});
+  }
+  else {
     const Batch& last_batch = batches_.back();
     batches_.push_back(Batch{
         time, point_cloud, high_resolution_filtered_points,
@@ -297,7 +306,15 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
       problem.SetParameterBlockConstant(batch.state.rotation.data());
       problem.AddParameterBlock(batch.state.velocity.data(), 3);
       problem.SetParameterBlockConstant(batch.state.velocity.data());
-    } else {
+    }
+    else if(num_accumulated_ + i < 3 * options_.scans_per_accumulation()) {
+      problem.SetParameterBlockConstant(batch.state.translation.data());
+      problem.SetParameterBlockConstant(batch.state.rotation.data());
+      problem.AddParameterBlock(batch.state.velocity.data(), 3);
+      problem.SetParameterBlockConstant(batch.state.velocity.data());
+    }
+
+    else {
       problem.SetParameterization(batch.state.rotation.data(),
                                   new ceres::QuaternionParameterization());
     }
@@ -408,7 +425,6 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     std::vector<double> residuals;
     std::vector<double> gradient;
     problem.Evaluate(ceres::Problem::EvaluateOptions(), &cost, &residuals, &gradient, NULL);
-    LOG(INFO)<<"Residual size: "<<residuals.size()<<" "<<control_counter;
     size_t block_idx;
     size_t residual_idx = 0;
     size_t batch_idx = 0;
@@ -450,7 +466,18 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
         residual_idx++;
       }
       residual_structure[batch_idx][4].second = avg;// / residual_structure[block_idx].size();
+    }
 
+    for(batch_idx = 1; batch_idx < batches_.size(); ++ batch_idx) {
+      //Odometry
+      if(residual_structure[batch_idx].size() > 5) {
+        double avg = 0.0;
+        for(block_idx = 0; block_idx < residual_structure[batch_idx][5].first; ++block_idx) {
+          avg += residuals[residual_idx];
+          residual_idx++;
+        }
+        residual_structure[batch_idx][5].second = avg;// / residual_structure[block_idx].size();
+      }
     }
     LOG(INFO)<<"Residuals: ";
     batch_idx = 0;
