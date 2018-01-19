@@ -33,7 +33,7 @@ find_package(Boost REQUIRED COMPONENTS iostreams)
 find_package(Ceres REQUIRED COMPONENTS SparseLinearAlgebraLibrary)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
-find_package(Protobuf 3.0.0 REQUIRED)
+find_package(protobuf_catkin 3.0.0 REQUIRED)
 
 include(FindPkgConfig)
 PKG_SEARCH_MODULE(CAIRO REQUIRED cairo>=1.12.16)
@@ -93,7 +93,7 @@ foreach(ABS_FIL ${ALL_PROTOS})
   add_custom_command(
     OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
            "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
-    COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+    COMMAND  ${protoc_PROGRAM}
     ARGS --cpp_out  ${PROJECT_BINARY_DIR} -I
       ${PROJECT_SOURCE_DIR} ${ABS_FIL}
     DEPENDS ${ABS_FIL}
@@ -121,7 +121,7 @@ if(${BUILD_GRPC})
     add_custom_command(
       OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.cc"
              "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.h"
-      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+      COMMAND  ${protoc_PROGRAM}
       ARGS --grpc_out  ${PROJECT_BINARY_DIR}
         --cpp_out  ${PROJECT_BINARY_DIR}
         -I ${PROJECT_SOURCE_DIR}
@@ -198,10 +198,10 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 target_link_libraries(${PROJECT_NAME} PUBLIC ${CAIRO_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  ${PROTOBUF_INCLUDE_DIR})
+  ${protobuf_catkin_INCLUDE_DIRS})
 # TODO(hrapp): This should not explicitly list pthread and use
 # PROTOBUF_LIBRARIES, but that failed on first try.
-target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} pthread)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${protobuf_catkin_LIBRARIES} pthread)
 if(${BUILD_GRPC})
   target_link_libraries(${PROJECT_NAME} PUBLIC grpc++)
 endif()
