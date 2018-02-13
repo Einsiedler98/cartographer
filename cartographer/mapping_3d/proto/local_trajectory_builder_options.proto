@@ -38,6 +38,9 @@ message LocalTrajectoryBuilderOptions {
   // scan matching.
   optional int32 scans_per_accumulation = 3;
 
+  // Number of scans used to initialize the map. Assuming the robot is standing still.
+  optional int32 scans_for_initialization = 13;
+
   // Voxel filter that gets applied to the range data immediately after
   // cropping.
   optional float voxel_filter_size = 4;
@@ -59,4 +62,5 @@ message LocalTrajectoryBuilderOptions {
       kalman_local_trajectory_builder_options = 10;
   optional OptimizingLocalTrajectoryBuilderOptions
       optimizing_local_trajectory_builder_options = 11;
+
 }

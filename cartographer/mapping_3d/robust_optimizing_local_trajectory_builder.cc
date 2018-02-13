@@ -199,7 +199,7 @@ RobustOptimizingLocalTrajectoryBuilder::AddRangefinderData(
               State(Eigen::Vector3d::Zero(), imu_tracker_->orientation(),
                     Eigen::Vector3d::Zero()), imu_initial_delay});
   }
-  else if (num_accumulated_ < 3 * options_.scans_per_accumulation()) {
+  else if (num_accumulated_ < options_.scans_for_initialization()) {
     const Batch& last_batch = batches_.back();
     batches_.push_back(
         Batch{time, point_cloud, high_resolution_filtered_points,
@@ -312,7 +312,7 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
       problem.AddParameterBlock(batch.state.velocity.data(), 3);
       problem.SetParameterBlockConstant(batch.state.velocity.data());
     }
-    else if(num_accumulated_ + i < 3 * options_.scans_per_accumulation()) {
+    else if(num_accumulated_ + i < options_.scans_for_initialization()) {
       problem.SetParameterBlockConstant(batch.state.translation.data());
       problem.SetParameterBlockConstant(batch.state.rotation.data());
       problem.AddParameterBlock(batch.state.velocity.data(), 3);

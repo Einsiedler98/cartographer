@@ -34,6 +34,8 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
   options.set_max_range(parameter_dictionary->GetDouble("max_range"));
   options.set_scans_per_accumulation(
       parameter_dictionary->GetInt("scans_per_accumulation"));
+  options.set_scans_for_initialization(
+      parameter_dictionary->GetInt("scans_for_initialization"));
   options.set_voxel_filter_size(
       parameter_dictionary->GetDouble("voxel_filter_size"));
   *options.mutable_high_resolution_adaptive_voxel_filter_options() =
