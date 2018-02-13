@@ -151,6 +151,11 @@ RobustOptimizingLocalTrajectoryBuilder::AddRangefinderData(
     const sensor::PointCloud& ranges) {
   CHECK_GT(ranges.size(), 0);
 
+  if (!imu_tracker_) {
+    LOG(INFO) << "IMUTracker not yet initialized.";
+    return nullptr;
+  }
+
   // TODO(hrapp): Handle misses.
   // TODO(hrapp): Where are NaNs in range_data_in_tracking coming from?
   sensor::PointCloud point_cloud;
@@ -419,7 +424,7 @@ RobustOptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   // The optimized states in 'batches_' are in the submap frame and we transform
   // them in place to be in the local SLAM frame again.
 
-  bool verbose = true;
+  bool verbose = false;
   if(verbose) {
     double cost;
     std::vector<double> residuals;
