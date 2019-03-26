@@ -71,6 +71,36 @@ void GridDrawer::DrawTSD(const cartographer::mapping::TSDF2D& grid) {
   }
 }
 
+void GridDrawer::DrawEDF(const cartographer::mapping::EDF2D& grid) {
+  double scale = 1. / limits_.resolution();
+  int scaled_num_x_cells = limits_.cell_limits().num_y_cells;
+  int scaled_num_y_cells = limits_.cell_limits().num_x_cells;
+  for (int ix = 0; ix < scaled_num_x_cells; ++ix) {
+    for (int iy = 0; iy < scaled_num_y_cells; ++iy) {
+      float r = 1.f;
+      float g = 1.f;
+      float b = 1.f;
+      float val = grid.GetED({iy, ix}) / grid.max_distance_;
+      //      LOG(INFO)<<val;
+      if (val > 0.f) {
+        g = 1. - std::pow(std::abs(val), 0.5);
+        b = g;
+      } else {
+        r = 1. - std::pow(std::abs(val), 0.5);
+        g = r;
+      }
+      //      r = 0.2 + 0.6* std::min(std::abs(val)*10.0, 1.0);
+      //      g = 0.2 ;
+      //      b = 0.2 ;
+
+      cairo_set_source_rgb(grid_surface_context_, r, g, b);
+      cairo_rectangle(grid_surface_context_, scale * (float(ix)),
+                      scale * ((float)iy), scale, scale);
+      cairo_fill(grid_surface_context_);
+    }
+  }
+}
+
 void GridDrawer::DrawWeights(const cartographer::mapping::TSDF2D& grid) {
   double scale = 1. / limits_.resolution();
   int scaled_num_x_cells = limits_.cell_limits().num_y_cells * scale;

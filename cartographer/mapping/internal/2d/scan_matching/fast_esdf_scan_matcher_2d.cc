@@ -47,9 +47,8 @@ FastESDFScanMatcher2D::FastESDFScanMatcher2D(
   const TSDF2D& tsdf = static_cast<const TSDF2D&>(grid);
   max_depth_ = options.branch_and_bound_depth();
   precomputation_grid_ = absl::make_unique<EDF2D>(
-      CreateEDFFromTSDF((std::pow(3, max_depth_ - 1) - 1) * std::sqrt(2) *
-                             0.5 * grid.limits().resolution(),
-                         tsdf.conversion_tables_, tsdf));
+      tsdf, (std::pow(3, max_depth_ - 1) - 1) * std::sqrt(2) * 0.5 *
+                grid.limits().resolution());
   //    evaluation::GridDrawer drawer(tsdf.limits());
   //    drawer.DrawTSD(tsdf);
   //    drawer.DrawIsoSurface(tsdf);
@@ -115,7 +114,7 @@ bool FastESDFScanMatcher2D::MatchWithSearchParameters(
       limits_, rotated_scans,
       Eigen::Translation2f(initial_pose_estimate.translation().x(),
                            initial_pose_estimate.translation().y()));
-  // search_parameters.ShrinkToFit(discrete_scans, limits_.cell_limits());
+  search_parameters.ShrinkToFit(discrete_scans, limits_.cell_limits());
 
   std::vector<BBEvaluatedCandidates> bb_regions;
   const std::vector<Candidate2D> lowest_resolution_candidates =
@@ -127,28 +126,24 @@ bool FastESDFScanMatcher2D::MatchWithSearchParameters(
       max_depth_ - 1, max_score, bb_regions);
 
   if (best_candidate.score < max_score) {
-//            evaluation::GridDrawer drawer(precomputation_grid_->limits());
-//            drawer.DrawTSD(*precomputation_grid_);
-//            drawer.DrawBBBounds(bb_regions, initial_pose_estimate);
-//            drawer.DrawPointcloud(
-//                point_cloud, initial_pose_estimate,
-//                transform::Rigid2d(
-//                    {initial_pose_estimate.translation().x() +
-//                    best_candidate.x,
-//                     initial_pose_estimate.translation().y() +
-//                     best_candidate.y},
-//                    initial_rotation *
-//                    Eigen::Rotation2Dd(best_candidate.orientation)));
-//            auto start = std::chrono::high_resolution_clock::now();
-//            std::string filename =
-//                "grid_with_inserted_cloud" +
-//                std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(
-//                                   start.time_since_epoch())
-//                                   .count()) +
-//                ".png";
-//            drawer.ToFile(filename);
-
-
+    evaluation::GridDrawer drawer(limits_);
+    drawer.DrawEDF(*precomputation_grid_);
+    drawer.DrawBBBounds(bb_regions, initial_pose_estimate);
+    drawer.DrawPointcloud(
+        point_cloud, initial_pose_estimate,
+        transform::Rigid2d(
+            {initial_pose_estimate.translation().x() + best_candidate.x,
+             initial_pose_estimate.translation().y() + best_candidate.y},
+            initial_rotation * Eigen::Rotation2Dd(best_candidate.orientation)));
+    auto start = std::chrono::high_resolution_clock::now();
+    std::string filename =
+        "grid_with_inserted_cloud" +
+        std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(
+                           start.time_since_epoch())
+                           .count()) +
+        ".png";
+    drawer.ToFile(filename);
+    LOG(INFO) << filename;
 
     *score = best_candidate.score;
     *pose_estimate = transform::Rigid2d(
@@ -167,11 +162,11 @@ FastESDFScanMatcher2D::ComputeLowestResolutionCandidates(
     std::vector<BBEvaluatedCandidates>& bb_regions) const {
   std::vector<Candidate2D> lowest_resolution_candidates =
       GenerateLowestResolutionCandidates(search_parameters);
-  float search_bound_delta =
-      max_depth_ > 1
-          ? (std::pow(3, max_depth_ - 1) - 1) * std::sqrt(2) * 0.5 *
-                precomputation_grid_->limits().resolution()
-          : 0.f;
+  float search_bound_delta = max_depth_ > 1
+                                 ? (std::pow(3, max_depth_ - 1) - 1) *
+                                       std::sqrt(2) * 0.5 *
+                                       precomputation_grid_->resolution_
+                                 : 0.f;
   // LOG(INFO)<<"depth "<<max_depth_<<" search_bound_delta
   // "<<search_bound_delta;
   ScoreCandidates(*precomputation_grid_.get(), discrete_scans,
@@ -250,7 +245,7 @@ void FastESDFScanMatcher2D::ScoreCandidates(
           xy_index.x() + candidate.x_index_offset,
           xy_index.y() + candidate.y_index_offset);
       float update = std::max(
-          std::abs(precomputation_grid.GetTSD(proposed_xy_index)) -
+          std::abs(precomputation_grid.GetED(proposed_xy_index)) -
               search_bound * 1.0825f,  // Correction for ESDF approximation
           0.f);
       sum += update;
@@ -310,11 +305,11 @@ Candidate2D FastESDFScanMatcher2D::BranchAndBound(
       }
     }
 
-    float search_bound_delta =
-        candidate_depth > 1
-            ? (std::pow(3, candidate_depth - 1) - 1) * std::sqrt(2) * 0.5 *
-                  precomputation_grid_->limits().resolution()
-            : 0.f;
+    float search_bound_delta = candidate_depth > 1
+                                   ? (std::pow(3, candidate_depth - 1) - 1) *
+                                         std::sqrt(2) * 0.5 *
+                                         precomputation_grid_->resolution_
+                                   : 0.f;
     ScoreCandidates(*precomputation_grid_.get(), discrete_scans,
                     search_parameters, &higher_resolution_candidates,
                     search_bound_delta, bb_regions);
